@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "epoch-timeago": "^1.1.9",
     "ky": "^0.26.0",
+    "sentence-case": "^3.0.4",
     "vue": "^2.6.11",
     "vuetify": "^2.4.0",
     "vuex": "^3.4.0"

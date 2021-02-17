@@ -8,8 +8,8 @@
         </h1>
 
         <p class="subheading font-weight-regular">
-          Use the buttons below to start and stop the server. After the <br/>
-          server's status changes to "running", it may take a minute or two to<br/>
+          Use the panel below to start and stop the server. After the <br/>
+          server's status changes to "Running", it may take a minute or two to<br/>
           become connect-able.
         </p>
       </v-col>
@@ -24,29 +24,41 @@
           max-width="500"
           class="mx-auto"
         >
-          <v-card-text>
+          <v-card-text class="mb-0 pb-0">
           <div>Status</div>
-          <p class="display-1 text--primary">
-            {{status}}
+          <p class="display-1 text--primary mb-0">
+            {{statusText}}
           </p>
           </v-card-text>
+          <v-card-subtitle class="mt-0 pt-0">
+            {{upTimeText}}
+          </v-card-subtitle>
           <v-card-actions>
-            <v-btn
-              text
-              color="primary"
-              @click="start"
-              :disabled="!canStart"
-            >
-              Start
-            </v-btn>
-            <v-btn
-              color="error"
-              text
-              @click="stop"
-              :disabled="!canStop"
-            >
-              Stop
-            </v-btn>
+            <v-row justify="space-between">
+              <v-col>
+                <v-btn
+                  text
+                  color="primary"
+                  @click="start"
+                  :disabled="!canStart"
+                >
+                  Start
+                </v-btn>
+                <v-btn
+                  color="error"
+                  text
+                  @click="stop"
+                  :disabled="!canStop"
+                >
+                  Stop
+                </v-btn>
+              </v-col>
+              <v-col class="d-flex justify-end">
+                <template v-if="pending">
+                  <v-progress-circular indeterminate></v-progress-circular>
+                </template>
+              </v-col>
+            </v-row>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -55,6 +67,8 @@
 
 <script>
 import ky from 'ky';
+import timeago from 'epoch-timeago';
+import { sentenceCase } from 'sentence-case';
 
 export default {
   name: 'Config',
@@ -64,13 +78,15 @@ export default {
     pending: false,
     canStart: false,
     canStop: false,
+    upTime: 0,
   }),
   mounted() {
     const self = this;
     const setValue = async () => {
-      const { status } = await ky(
+      const { status, lastStartTimestamp, lastStopTimestamp } = await ky(
         'https://us-east4-gw2-notifier-test.cloudfunctions.net/status',
       ).json();
+      self.upTime = Math.max(Date.parse(lastStartTimestamp), Date.parse(lastStopTimestamp));
       self.status = status;
       if (status === 'RUNNING' && !self.pending) {
         self.canStop = true;
@@ -81,6 +97,21 @@ export default {
     };
     setValue();
     window.setInterval(setValue, 10000);
+  },
+  computed: {
+    upTimeText() {
+      // return this.upTime;
+      if (this.status === 'RUNNING') {
+        return `Started ${timeago(this.upTime)}.`;
+      }
+      if (this.status === 'TERMINATED') {
+        return `Stopped ${timeago(this.upTime)}.`;
+      }
+      return '...';
+    },
+    statusText() {
+      return sentenceCase(this.status);
+    },
   },
   methods: {
     start() {
