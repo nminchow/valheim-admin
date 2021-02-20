@@ -2,14 +2,14 @@
   <v-container>
     <v-row class="text-center">
 
-      <v-col class="mb-4" cols="12">
+      <v-col class="mb-4" sm="8" offset-sm="2">
         <h1 class="display-2 font-weight-bold mb-3">
           Valgrind Dashboard
         </h1>
 
         <p class="subheading font-weight-regular">
-          Use the panel below to start and stop the server. After the <br/>
-          server's status changes to "Running", it may take a minute or two to<br/>
+          Use the panel below to start and stop the server. After the
+          server's status changes to "Running", it may take a minute or two to
           become connect-able.
         </p>
       </v-col>
