@@ -31,7 +31,7 @@
           </p>
           </v-card-text>
           <v-card-subtitle class="mt-0 pt-0">
-            {{upTimeText}}
+            {{upTime}}
           </v-card-subtitle>
           <v-card-actions>
             <v-row justify="space-between">
@@ -44,14 +44,52 @@
                 >
                   Start
                 </v-btn>
-                <v-btn
-                  color="error"
-                  text
-                  @click="stop"
-                  :disabled="!canStop"
+                <v-dialog
+                  v-model="dialog"
+                  width="500"
+                  overlay-color="error"
                 >
-                  Stop
-                </v-btn>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      color="warning"
+                      text
+                      v-bind="attrs"
+                      v-on="on"
+                      :disabled="!canStop"
+                    >
+                      Stop
+                    </v-btn>
+                  </template>
+
+                  <v-card>
+                    <v-card-title class="headline">
+                      Have you saved?
+                    </v-card-title>
+                    <v-card-text>
+                      The server only saves every 20 minutes. Ensure
+                      you have saved before terminating the server. To save, open
+                      the admin console (f5) and issue the "save"
+                      command.
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="warning"
+                        text
+                        @click="dialog = false;"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        color="error"
+                        text
+                        @click="stop"
+                      >
+                        Dew it
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
               </v-col>
               <v-col class="d-flex justify-end">
                 <template v-if="pending">
@@ -78,7 +116,8 @@ export default {
     pending: false,
     canStart: false,
     canStop: false,
-    upTime: 0,
+    upTime: '...',
+    dialog: false,
   }),
   mounted() {
     const self = this;
@@ -86,29 +125,30 @@ export default {
       const { status, lastStartTimestamp, lastStopTimestamp } = await ky(
         'https://us-east4-gw2-notifier-test.cloudfunctions.net/status',
       ).json();
-      self.upTime = Math.max(Date.parse(lastStartTimestamp), Date.parse(lastStopTimestamp));
+      const recentTime = Math.max(Date.parse(lastStartTimestamp), Date.parse(lastStopTimestamp));
+      this.canStart = false;
+      this.canStop = false;
       self.status = status;
       if (status === 'RUNNING' && !self.pending) {
-        self.canStop = true;
+        if (!self.pending) {
+          self.canStop = true;
+        }
+        self.upTime = `Started ${timeago(recentTime)}.`;
+        return;
       }
       if (status === 'TERMINATED' && !self.pending) {
-        self.canStart = true;
+        if (!self.pending) {
+          self.canStart = true;
+        }
+        self.upTime = `Stopped ${timeago(recentTime)}.`;
+        return;
       }
+      self.upTime = '...';
     };
     setValue();
     window.setInterval(setValue, 10000);
   },
   computed: {
-    upTimeText() {
-      // return this.upTime;
-      if (this.status === 'RUNNING') {
-        return `Started ${timeago(this.upTime)}.`;
-      }
-      if (this.status === 'TERMINATED') {
-        return `Stopped ${timeago(this.upTime)}.`;
-      }
-      return '...';
-    },
     statusText() {
       return sentenceCase(this.status);
     },
@@ -119,6 +159,7 @@ export default {
       this.setPending(20);
     },
     stop() {
+      this.dialog = false;
       ky('https://us-east4-gw2-notifier-test.cloudfunctions.net/stop');
       this.setPending(20);
     },
