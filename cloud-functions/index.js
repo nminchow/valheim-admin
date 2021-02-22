@@ -1,5 +1,8 @@
 const Compute = require('@google-cloud/compute');
+const { Logging } = require('@google-cloud/logging');
 const compute = new Compute();
+const logging = new Logging();
+
 const zone = compute.zone('us-east4-c');
 const vm = zone.vm('valheim-server');
 
@@ -32,10 +35,17 @@ const stop = ({res}) => {
   );
 };
 
-const status = ({res}) => {
-  vm.get().then(([_,status]) =>
-    res.status(200).send(status)
-  );
+const status = async ({res}) => {
+  const statusResult = vm.get();
+  const logResult = logging.getEntries({
+    filter: 'resource.type="gce_instance" AND resource.labels.instance_id="6532541859074872381"',
+    orderBy: 'timestamp desc',
+    pageSize: 25,
+  });
+
+  [[_, vmStatus], [entries]] = await Promise.all([statusResult, logResult]);
+
+  res.status(200).send({ vmStatus, entries });
 }
 
 exports.start = handlePublic(start);

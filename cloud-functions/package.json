@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "start": "functions-framework"
+  },
   "dependencies": {
-    "@google-cloud/compute": "^2.4.3"
+    "@google-cloud/compute": "^2.4.3",
+    "@google-cloud/logging": "^9.0.2"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^1.7.1"
   }
 }

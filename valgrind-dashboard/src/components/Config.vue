@@ -100,6 +100,18 @@
           </v-card-actions>
         </v-card>
       </v-col>
+      <v-col
+        class="mb-5"
+      >
+        <!-- <v-card
+          elevation="2"
+          outlined
+          tile
+          class="mx-auto"
+        > -->
+        <Logs :entries="entries" />
+        <!-- </v-card> -->
+      </v-col>
   </v-container>
 </template>
 
@@ -107,6 +119,7 @@
 import ky from 'ky';
 import timeago from 'epoch-timeago';
 import { sentenceCase } from 'sentence-case';
+import Logs from './Logs.vue';
 
 export default {
   name: 'Config',
@@ -118,13 +131,18 @@ export default {
     canStop: false,
     upTime: '...',
     dialog: false,
+    entries: [],
   }),
+  components: {
+    Logs,
+  },
   mounted() {
     const self = this;
     const setValue = async () => {
-      const { status, lastStartTimestamp, lastStopTimestamp } = await ky(
+      const { vmStatus: { status, lastStartTimestamp, lastStopTimestamp }, entries } = await ky(
         'https://us-east4-gw2-notifier-test.cloudfunctions.net/status',
       ).json();
+      this.entries = entries;
       const recentTime = Math.max(Date.parse(lastStartTimestamp), Date.parse(lastStopTimestamp));
       this.canStart = false;
       this.canStop = false;
