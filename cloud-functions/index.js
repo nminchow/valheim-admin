@@ -4,7 +4,7 @@ const compute = new Compute();
 const logging = new Logging();
 
 const zone = compute.zone('us-central1-c');
-const vm = zone.vm('valheim-server');
+const vm = zone.vm('palworld');
 
 const handleOptions = async (req, res, handler) => {
   res.set('Access-Control-Allow-Origin', '*');
